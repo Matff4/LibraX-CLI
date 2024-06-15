@@ -9,14 +9,15 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <memory>
 #include "MenuOption.h"
 
 
 class MenuItem {
 private:
     std::string name;
-    std::vector<MenuItem*> subItems;
-    std::vector<MenuOption*> options;
+    std::vector<std::unique_ptr<MenuItem>> subItems;
+    std::vector<std::unique_ptr<MenuOption>> options;
     bool isMain;
 
 public:
@@ -24,13 +25,12 @@ public:
 
     std::string getName();
 
-    void addSubItem(MenuItem* item);
-
-    void addOption(MenuOption* option);
+    void addSubItem(std::unique_ptr<MenuItem> item);
+    void addOption(std::unique_ptr<MenuOption> option);
 
     void display();
 
-    ~MenuItem();
+    //~MenuItem();
 };
 
 #endif //LIBRAX_MENUITEM_H

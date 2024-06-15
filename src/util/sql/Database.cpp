@@ -17,11 +17,11 @@ Database::~Database() {
     this->connection->close();
 }
 
-std::vector<Book*> Database::getBooks() const {
+std::vector<std::unique_ptr<Book>> Database::getBooks() const {
     const std::unique_ptr<sql::Statement> stmt(this->connection->createStatement());
     const std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT * FROM books"));
 
-    std::vector<Book*> books;
+    std::vector<std::unique_ptr<Book>> books;
 
     while (res->next()) {
         const int id               = res->getInt("id");
@@ -32,9 +32,7 @@ std::vector<Book*> Database::getBooks() const {
         const int qty              = res->getInt("qty");
         const int rented           = res->getInt("rented");
 
-        auto book = new Book(id, isbn, title, author, year, qty, rented);
-        books.push_back(book);
-        //delete book;
+        books.push_back(std::make_unique<Book>(id, isbn, title, author, year, qty, rented));
     }
 
     return books;
@@ -72,4 +70,23 @@ void Database::removeBook(int idx) const {
             std::cerr << "SQLState: " << e.getSQLState() << std::endl;
         }
     }
+}
+
+std::vector<std::unique_ptr<User>> Database::getUsers() const {
+    const std::unique_ptr<sql::Statement> stmt(this->connection->createStatement());
+    const std::unique_ptr<sql::ResultSet> res(stmt->executeQuery("SELECT * FROM users"));
+
+    std::vector<std::unique_ptr<User>> users;
+
+    while (res->next()) {
+        const int id               = res->getInt("id");
+        const std::string firstname    = res->getString("firstname");
+        const std::string lastname    = res->getString("lastname");
+        const std::string rented_books= res->getString("rented_books");
+
+
+        users.push_back(std::make_unique<User>(id, firstname, lastname, rented_books));
+    }
+
+    return users;
 }

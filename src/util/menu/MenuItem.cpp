@@ -12,14 +12,13 @@ std::string MenuItem::getName() {
 }
 
 
-void MenuItem::addSubItem(MenuItem* item) {
-    subItems.push_back(item);
+void MenuItem::addSubItem(std::unique_ptr<MenuItem> item) {
+    subItems.push_back(std::move(item));
 }
 
-void MenuItem::addOption(MenuOption *option) {
-    options.push_back(option);
+void MenuItem::addOption(std::unique_ptr<MenuOption> option) {
+    options.push_back(std::move(option));
 }
-
 
 void MenuItem::display() {
     while(true) {
@@ -47,9 +46,7 @@ void MenuItem::display() {
         std::cin.get(ch_input);
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-        int input = ch_input - '0';
-
-        if(input == 0) {
+        if(const int input = ch_input - '0'; input == 0) {
             break;
         } else if(!subItems.empty() && input >= 1 && input <= subItems.size()) {
             subItems[input - 1]->display();
@@ -63,9 +60,9 @@ void MenuItem::display() {
     }
 }
 
-MenuItem::~MenuItem() {
+/*MenuItem::~MenuItem() {
     for (auto& item : subItems) {
         delete item;
     }
     subItems.clear();
-}
+}*/

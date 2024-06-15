@@ -19,7 +19,9 @@ add_executable(LibraX src/main.cpp
         src/util/sql/Database.h
 
         src/model/Book.cpp
-        src/model/Book.h)
+        src/model/Book.h
+        src/model/User.cpp
+        src/model/User.h)
 
 
 target_link_libraries(LibraX mysqlcppconn)
