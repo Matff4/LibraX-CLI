@@ -36,10 +36,10 @@ public:
     void removeBook(int idx) const;
 
     std::vector<std::unique_ptr<User>> getUsers() const;
-    //void addUser(const User &user) const;
-    //void removeUser(int idx) const;
-    //void addRentedBook() const;
-    //void removeRentedBook() const;
+    void addUser(const User &user) const;
+    void removeUser(int idx) const;
+    void rentBook(int idUsr, int idBook) const;
+    void returnBook(int idUsr, int idBook) const;
 };
 
 #endif // LIBRAX_DATABASE_H

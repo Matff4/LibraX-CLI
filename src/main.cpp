@@ -28,7 +28,7 @@ int main() {
             book->print();
         }
         std::println("{}", bar);
-        std::println("Found {} entries", books.size());
+        std::println("Found {} entries, press ENTER to continue", books.size());
 
         std::cin.get();
     };
@@ -87,7 +87,86 @@ int main() {
             user->print();
         }
         std::println("{}", bar);
-        std::println("Found {} entries", users.size());
+        std::println("Found {} entries, press ENTER to continue", users.size());
+
+        std::cin.get();
+    };
+
+    auto func_create_user = [&db]() {
+        std::string firstname, lastname;
+
+        std::println("\n\tAdding new user");
+
+        std::cout << "Firstname: ";
+        std::getline(std::cin, firstname);
+        std::cout << "Lastname: ";
+        std::getline(std::cin, lastname);
+
+        const User newUser(-1, firstname, lastname, "");
+
+        db->addUser(newUser);
+        std::println("Successfully added new user");
+
+        std::cin.get();
+    };
+
+    auto func_delete_user = [&db, &func_list_user]() {
+        func_list_user();
+        std::string input;
+
+        std::cout << "Enter user index to delete, enter '0' to cancel: ";
+        std::getline(std::cin, input);
+
+        if (int idx = std::stoi(input); idx != 0) {
+            db->removeUser(idx);
+            std::println("Successfully removed user with id {}", idx);
+        }
+
+        std::cin.get();
+    };
+
+    auto func_rent_book = [&db, &func_list_user, &func_list_book]() {
+        func_list_user();
+        std::string input1, input2;
+
+        std::cout << "Enter user index to choose, enter '0' to cancel: ";
+        std::getline(std::cin, input1);
+
+        if (int idusr = std::stoi(input1); idusr != 0) {
+            func_list_book();
+
+            std::cout << "Enter book index to rent, enter '0' to cancel: ";
+            std::getline(std::cin, input2);
+
+            if (int idbook = std::stoi(input2); idbook != 0) {
+                db->rentBook(idusr, idbook);
+                std::println("Successfully rented book {} to user {}", idbook, idusr);
+            }
+
+        }
+
+        std::cin.get();
+    };
+
+    auto func_return_book = [&db, &func_list_user, &func_list_book]() {
+        func_list_user();
+        std::string input1, input2;
+
+        std::cout << "Enter user index to choose, enter '0' to cancel: ";
+        std::getline(std::cin, input1);
+
+        if (int idusr = std::stoi(input1); idusr != 0) {
+            func_list_book();
+
+            std::cout << "Enter book index to return, enter '0' to cancel: ";
+            std::getline(std::cin, input2);
+
+            if (int idbook = std::stoi(input2); idbook != 0) {
+                db->rentBook(idusr, idbook);
+                std::println("Successfully returned book {} from user {}", idbook, idusr);
+            }
+
+        }
 
         std::cin.get();
     };
@@ -98,7 +177,7 @@ int main() {
     /*
     *  ================= Create menu items =================
     */
-    auto mainMenu = std::make_unique<MenuItem>("LibraX CLI", true);
+    const auto mainMenu = std::make_unique<MenuItem>("LibraX CLI", true);
 
     auto booksMenu = std::make_unique<MenuItem>("Books");
     booksMenu->addOption(std::make_unique<MenuOption>("List books", func_list_book));
@@ -107,13 +186,17 @@ int main() {
 
     auto usersMenu = std::make_unique<MenuItem>("Users");
     usersMenu->addOption(std::make_unique<MenuOption>("List users", func_list_user));
+    usersMenu->addOption(std::make_unique<MenuOption>("New user", func_create_user));
+    usersMenu->addOption(std::make_unique<MenuOption>("Delete user", func_delete_user));
+    usersMenu->addOption(std::make_unique<MenuOption>("Rent book", func_rent_book));
+    usersMenu->addOption(std::make_unique<MenuOption>("Return book", func_return_book));
 
-    auto settingsMenu = std::make_unique<MenuItem>("Settings");
-    settingsMenu->addSubItem(std::make_unique<MenuItem>("-"));
+    //auto settingsMenu = std::make_unique<MenuItem>("Settings [not_implemented (yet)]");
+    //settingsMenu->addSubItem(std::make_unique<MenuItem>("-"));
 
     mainMenu->addSubItem(std::move(booksMenu));
     mainMenu->addSubItem(std::move(usersMenu));
-    mainMenu->addSubItem(std::move(settingsMenu));
+    //mainMenu->addSubItem(std::move(settingsMenu));
     /*
     *  =====================================================
     */

@@ -90,3 +90,101 @@ std::vector<std::unique_ptr<User>> Database::getUsers() const {
 
     return users;
 }
+
+void Database::addUser(const User &user) const {
+    const std::string query = std::format(
+        "INSERT INTO users (firstname, lastname, rented_books) VALUES ('{}', '{}', '');",
+        user.getFirstname(), user.getLastname()
+    );
+
+    try {
+        const std::unique_ptr<sql::Statement> stmt(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
+    } catch (sql::SQLException &e) {
+        if(e.getErrorCode() != 0) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
+
+}
+
+void Database::removeUser(int idx) const {
+    const std::string query = std::format("DELETE FROM users WHERE id={};", idx);
+
+    try {
+        const std::unique_ptr<sql::Statement> stmt(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res(stmt->executeQuery(query));
+    } catch (sql::SQLException &e) {
+        if(e.getErrorCode() != 0) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
+}
+
+void Database::rentBook(int idUsr, int idBook) const {
+    const std::string query_select = std::format("SELECT rented_books FROM users WHERE id = {};", std::to_string(idUsr));
+
+    try {
+        const std::unique_ptr<sql::Statement> stmt_select(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res_select(stmt_select->executeQuery(query_select));
+
+        std::string rentedBooks;
+
+        if (res_select->next()) {
+            rentedBooks = res_select->getString("rented_books");
+            if (!rentedBooks.empty()) {
+                rentedBooks += ", ";
+            }
+            rentedBooks += std::to_string(idBook);
+        }
+
+        const std::string query_update = std::format("UPDATE users SET rented_books = '{}' WHERE id = '{}';", rentedBooks, std::to_string(idUsr));
+
+        const std::unique_ptr<sql::Statement> stmt_update(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res_update(stmt_select->executeQuery(query_update));
+
+    } catch (sql::SQLException &e) {
+        if(e.getErrorCode() != 0) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
+}
+
+void Database::returnBook(int idUsr, int idBook) const {
+    const std::string query_select = std::format("SELECT rented_books FROM users WHERE id = {};", std::to_string(idUsr));
+
+    try {
+        const std::unique_ptr<sql::Statement> stmt_select(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res_select(stmt_select->executeQuery(query_select));
+
+        std::string rentedBooks;
+
+        if(!rentedBooks.contains(std::to_string(idBook)) )
+
+        if (res_select->next()) {
+            rentedBooks = res_select->getString("rented_books");
+            if (!rentedBooks.empty()) {
+                rentedBooks += ", ";
+            }
+            rentedBooks += std::to_string(idBook);
+        }
+
+        const std::string query_update = std::format("UPDATE users SET rented_books = '{}' WHERE id = '{}';", rentedBooks, std::to_string(idUsr));
+
+        const std::unique_ptr<sql::Statement> stmt_update(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res_update(stmt_select->executeQuery(query_update));
+
+    } catch (sql::SQLException &e) {
+        if(e.getErrorCode() != 0) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
+}
