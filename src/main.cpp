@@ -140,7 +140,6 @@ int main() {
 
             if (int idbook = std::stoi(input2); idbook != 0) {
                 db->rentBook(idusr, idbook);
-                std::println("Successfully rented book {} to user {}", idbook, idusr);
             }
 
         }
@@ -162,8 +161,7 @@ int main() {
             std::getline(std::cin, input2);
 
             if (int idbook = std::stoi(input2); idbook != 0) {
-                db->rentBook(idusr, idbook);
-                std::println("Successfully returned book {} from user {}", idbook, idusr);
+                db->returnBook(idusr, idbook);
             }
 
         }

@@ -3,6 +3,7 @@
 //
 
 #include "Database.h"
+#include <iostream>
 
 Database::Database() {
     sql::mysql::MySQL_Driver *driver = sql::mysql::get_mysql_driver_instance();
@@ -125,7 +126,7 @@ void Database::removeUser(int idx) const {
     }
 }
 
-void Database::rentBook(int idUsr, int idBook) const {
+void Database::rentBook(const int idUsr, const int idBook) const {
     const std::string query_select = std::format("SELECT rented_books FROM users WHERE id = {};", std::to_string(idUsr));
 
     try {
@@ -146,6 +147,30 @@ void Database::rentBook(int idUsr, int idBook) const {
 
         const std::unique_ptr<sql::Statement> stmt_update(this->connection->createStatement());
         const std::unique_ptr<sql::ResultSet> res_update(stmt_select->executeQuery(query_update));
+    } catch (sql::SQLException &e) {
+        if(e.getErrorCode() != 0) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
+
+    try {
+        // Increase rented book count in books table
+        const std::string query_sel_rented = std::format("SELECT rented FROM books WHERE id = '{}';", std::to_string(idBook));
+        const std::unique_ptr<sql::Statement> stmt_sel_rented(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res_sel_rented(stmt_sel_rented->executeQuery(query_sel_rented));
+
+        if(res_sel_rented->next()) {
+            int rented_qty = res_sel_rented->getInt("rented");
+            rented_qty++;
+
+            const std::string query_update_rented = std::format("UPDATE books SET rented = '{}' WHERE id = '{}';",
+                                                     rented_qty, std::to_string(idBook));
+
+            const std::unique_ptr<sql::Statement> stmt_update_rented(this->connection->createStatement());
+            const std::unique_ptr<sql::ResultSet> res_update_rented(stmt_update_rented->executeQuery(query_update_rented));
+        }
 
     } catch (sql::SQLException &e) {
         if(e.getErrorCode() != 0) {
@@ -154,9 +179,11 @@ void Database::rentBook(int idUsr, int idBook) const {
             std::cerr << "SQLState: " << e.getSQLState() << std::endl;
         }
     }
+
+    std::println("Successfully rented book {} to user {}", idBook, idUsr);
 }
 
-void Database::returnBook(int idUsr, int idBook) const {
+void Database::returnBook(const int idUsr, const int idBook) const {
     const std::string query_select = std::format("SELECT rented_books FROM users WHERE id = {};", std::to_string(idUsr));
 
     try {
@@ -165,20 +192,50 @@ void Database::returnBook(int idUsr, int idBook) const {
 
         std::string rentedBooks;
 
-        if(!rentedBooks.contains(std::to_string(idBook)) )
-
         if (res_select->next()) {
             rentedBooks = res_select->getString("rented_books");
-            if (!rentedBooks.empty()) {
-                rentedBooks += ", ";
+
+            if(!rentedBooks.contains(std::to_string(idBook)) || rentedBooks.empty()) {
+                std::println("Selected user does not have rented book with id {}", idBook);
+                return;
             }
-            rentedBooks += std::to_string(idBook);
+
+            std::vector<std::string> tokens;
+            std::string delimiter = ", ";
+            size_t start = 0, end = 0;
+
+            while ((end = rentedBooks.find(delimiter, start)) != std::string::npos) {
+                tokens.push_back(rentedBooks.substr(start, end - start));
+                start = end + delimiter.length();
+            }
+            tokens.push_back(rentedBooks.substr(start));
+
+            // Convert valueToRemove to string to compare with tokens
+            std::string valueStrToRemove = std::to_string(idBook);
+
+            // Remove the value from tokens if found
+            auto it = std::remove(tokens.begin(), tokens.end(), valueStrToRemove);
+            tokens.erase(it, tokens.end());
+
+            // Construct the modified string
+            std::string modifiedString;
+            for (size_t i = 0; i < tokens.size(); ++i) {
+                if (i > 0) {
+                    modifiedString += ", ";
+                }
+                modifiedString += tokens[i];
+            }
+
+            rentedBooks = modifiedString;
         }
 
-        const std::string query_update = std::format("UPDATE users SET rented_books = '{}' WHERE id = '{}';", rentedBooks, std::to_string(idUsr));
+        const std::string query_update = std::format("UPDATE users SET rented_books = '{}' WHERE id = '{}';",
+                                                     rentedBooks, std::to_string(idUsr));
 
         const std::unique_ptr<sql::Statement> stmt_update(this->connection->createStatement());
         const std::unique_ptr<sql::ResultSet> res_update(stmt_select->executeQuery(query_update));
+
+
 
     } catch (sql::SQLException &e) {
         if(e.getErrorCode() != 0) {
@@ -187,4 +244,31 @@ void Database::returnBook(int idUsr, int idBook) const {
             std::cerr << "SQLState: " << e.getSQLState() << std::endl;
         }
     }
+
+    try {
+        // Decrease rented book count in books table
+        const std::string query_sel_rented = std::format("SELECT rented FROM books WHERE id = '{}';", std::to_string(idBook));
+        const std::unique_ptr<sql::Statement> stmt_sel_rented(this->connection->createStatement());
+        const std::unique_ptr<sql::ResultSet> res_sel_rented(stmt_sel_rented->executeQuery(query_sel_rented));
+
+        if(res_sel_rented->next()) {
+            int rented_qty = res_sel_rented->getInt("rented");
+            rented_qty--;
+
+            const std::string query_update_rented = std::format("UPDATE books SET rented = '{}' WHERE id = '{}';",
+                                                     rented_qty, std::to_string(idBook));
+
+            const std::unique_ptr<sql::Statement> stmt_update_rented(this->connection->createStatement());
+            const std::unique_ptr<sql::ResultSet> res_update_rented(stmt_update_rented->executeQuery(query_update_rented));
+        }
+
+    } catch (sql::SQLException &e) {
+        if(e.getErrorCode() != 0) {
+            std::cerr << "SQLException: " << e.what() << std::endl;
+            std::cerr << "MySQL error code: " << e.getErrorCode() << std::endl;
+            std::cerr << "SQLState: " << e.getSQLState() << std::endl;
+        }
+    }
+
+    std::println("Successfully returned book {} from user {}", idBook, idUsr);
 }
